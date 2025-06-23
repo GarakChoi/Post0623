@@ -1,4 +1,4 @@
-package com.back.domain.post.post;
+package com.back.domain.post.post.controller;
 
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
@@ -15,18 +15,31 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class PostController {
     private final PostService postService;
 
-    @GetMapping("/posts/write")
-    @ResponseBody
-    public String showWrite() {
+    private String getWriteFormHtml() {
+        return getWriteFormHtml("");
+    }
+
+    private String getWriteFormHtml(String errorMessage) {
         return """
                 <form method="POST" action="doWrite">
-                  <input type="text" name="title" placeholder="제목" value="안녕">
+                  <input type="text" name="title" placeholder="제목" value="%s">
                   <br>
-                  <textarea name="content" placeholder="내용">반가워.</textarea>
+                  <textarea name="content" placeholder="내용">%s</textarea>
                   <br>
                   <input type="submit" value="작성">
                 </form>
-                """;
+                %s
+                """.formatted(
+                errorMessage,
+                errorMessage,
+                errorMessage.isBlank() ? "" : "<p style='color:red;'>" + errorMessage + "</p>"
+        );
+    }
+
+    @GetMapping("/posts/write")
+    @ResponseBody
+    public String showWrite() {
+        return getWriteFormHtml();
     }
 
     @PostMapping("/posts/doWrite")
@@ -36,6 +49,9 @@ public class PostController {
             @RequestParam(defaultValue = "") String title,
             @RequestParam(defaultValue = "") String content
     ) {
+        if (title.isBlank()) return "제목을 입력해주세요.";
+        if (content.isBlank()) return "내용을 입력해주세요.";
+
         Post post = postService.write(title, content);
 
         return "%d번 글이 생성되었습니다.".formatted(post.getId());
